@@ -80,9 +80,9 @@ async function captureAndSend() {
   try {
     const response = await emailjs.send(
       "service_had7jag",              // ← 네가 준 Service ID 여기 넣음
-      "YOUR_TEMPLATE_ID",             // ← 이건 아직 네가 안 줬으니까 템플릿 ID로 바꿔
+      "template_upvu62t",             // ← 이건 아직 네가 안 줬으니까 템플릿 ID로 바꿔
       templateParams,
-      "여기에_Public_Key_또_넣기"     // ← send()에 직접 넣는 방식 (init 없이도 동작)
+      "ycbHVBt3cm6FkCL--     // ← send()에 직접 넣는 방식 (init 없이도 동작)
     );
     console.log("전송 성공!", response.status, response.text);
   } catch (err) {
